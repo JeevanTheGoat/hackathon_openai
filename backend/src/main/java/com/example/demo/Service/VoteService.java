@@ -1,12 +1,9 @@
-package com.example.demo.Service;
+package com.example.demo.service;
 
-import com.example.demo.Entities.DebateStatus;
-import com.example.demo.Repository.DebateRepository;
-import com.example.demo.Repository.VoteRepository;
-import com.example.demo.Entities.Debate;
-import com.example.demo.Entities.Vote;
-import com.example.demo.Exceptions.DebateNotFoundException;
-import com.example.demo.Exceptions.MultipleVotesException;
+
+import com.example.demo.entities.Debate;
+import com.example.demo.entities.Vote;
+import com.example.demo.exceptions.MultipleVotesException;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,8 +12,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class VoteService {
 
-    private final DebateRepository debateRepository;
-    private final VoteRepository voteRepository;
+
     private final DebateService debateService;
 
     public String recordVote(String choice, Long debateId, HttpSession session){
@@ -34,12 +30,7 @@ public class VoteService {
         vote.setDebate(debate);
 
 
-
-
         debate.getVotes().add(vote);
-
-        debateRepository.save(debate);
-        voteRepository.save(vote);
 
 
         session.setAttribute("voted_"+debateId+"_"+session.getId(), true);

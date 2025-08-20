@@ -1,20 +1,18 @@
-package com.example.demo.Entities;
+package com.example.demo.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.Data;
 
-@Entity
-@Data
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class Vote {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "debate_id")
-    @JsonIgnore
+    @JsonBackReference
     private Debate debate;
 
     private String choice;

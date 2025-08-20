@@ -1,36 +1,35 @@
-package com.example.demo.Entities;
+package com.example.demo.entities;
 
-import jakarta.persistence.*;
-import lombok.Data;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-@Entity
-@Data
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.*;
+
+@Getter
+@Setter
 public class Debate {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private long id;
 
-    @OneToMany(mappedBy = "debate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Vote> votes;
-
-    @Enumerated(EnumType.STRING)
-    private DebateStatus status = DebateStatus.PENDING;
-
-    @Enumerated(EnumType.STRING)
-    private DebateWinner winner = DebateWinner.NONE;
-
-    @Enumerated(EnumType.STRING)
-    private DebateTurn turn = DebateTurn.AI1;
-
-    @OneToMany(mappedBy = "debate", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Message> messages;
-
-    private int voteCount;
-
     private String topic;
+
+    @JsonManagedReference
+    private List<Vote> votes = new ArrayList<>();
+
+    @JsonManagedReference
+    private List<Message> messages = new ArrayList<>();
+
+    private int nextMessageId = 1;
+
+    private Map<DebateTurn, AIDebater> debaters = new HashMap<>();
+
+    private DebateStatus status = DebateStatus.PENDING;
+    private DebateWinner winner = DebateWinner.NONE;
+    private DebateTurn turn = DebateTurn.AI1;
 
 
 }

@@ -1,103 +1,109 @@
-package com.example.demo.Service;
+package com.example.demo.service;
 
-
-import com.example.demo.Repository.DebateRepository;
-import com.example.demo.Entities.Debate;
-import com.example.demo.Entities.DebateStatus;
-import com.example.demo.Entities.DebateWinner;
-import com.example.demo.Entities.Vote;
-import com.example.demo.Exceptions.DebateNotFoundException;
-import com.example.demo.Exceptions.OngoingDebateException;
+import com.example.demo.entities.*;
+import com.example.demo.exceptions.DebateNotFoundException;
+import com.example.demo.exceptions.OngoingDebateException;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class DebateService {
 
-    private final DebateRepository debateRepository;
+    private final AIFactory aiFactory;
 
-    public Debate handleDebateWinner(Long id, HttpSession session){
+    private final Map<Long, Debate> debates = new HashMap<>();
 
+    private long nextId = 1;
+
+    public Debate handleDebateWinner(Long id, HttpSession session) {
 
         Debate debate = getDebate(id);
 
         List<Vote> votes = debate.getVotes();
 
-        long voteForAI1 = votes.stream()
-                .filter(v -> v.getChoice().equals("AI1")).count();
+        Map<String, Long> voteCounts = new HashMap<>();
+        String winner = "";
+        long maxVotes = 0;
+        boolean tie = false;
 
-        long voteForAI2 = votes.stream()
-                .filter(v -> v.getChoice().equals("AI2")).count();
+        for (int i = 1; i <= debate.getDebaters().size(); i++) {
+            String ai = "AI" + i;
+            long count = votes.stream()
+                    .filter(v -> v.getChoice().equals(ai))
+                    .count();
+            voteCounts.put(ai, count);
 
+            if (count > maxVotes) {
+                winner = ai;
+                maxVotes = count;
+                tie = false;
+            } else if (count == maxVotes) {
+                tie = true;
+            }
+        }
 
-        if(voteForAI2==voteForAI1){
+        if (tie) {
             debate.setWinner(DebateWinner.TIE);
-        }
-        else if(voteForAI2>voteForAI1){
-            debate.setWinner(DebateWinner.AI2);
-        }
-        else{
-            debate.setWinner(DebateWinner.AI1);
+        } else {
+            debate.setWinner(DebateWinner.valueOf(winner));
         }
 
         debate.setStatus(DebateStatus.FINISHED);
+        debate.getDebaters().clear();
 
         session.removeAttribute("voted_" + id + "_" + session.getId());
 
-        return debateRepository.save(debate);
-
-
+        return debate;
     }
 
-    public Debate createDebate(String topic){
+    public Debate createDebate(String topic, int aiCount) {
 
-
-        if(!canStartDebate()){
+        if (!canStartDebate()) {
             throw new OngoingDebateException("There is already an ongoing debate.");
         }
 
         Debate debate = new Debate();
+        debate.setId(nextId++);
         debate.setTopic(topic);
         debate.setStatus(DebateStatus.ACTIVE);
 
-        return debateRepository.save(debate);
+        Map<DebateTurn, AIDebater> debaters = debate.getDebaters();
 
+        List<AIDebater> aiDebaters = aiFactory.createNewDebaters(aiCount);
+
+        for (int i = 0; i < aiDebaters.size(); i++) {
+            DebateTurn turn = DebateTurn.values()[i];
+            debaters.put(turn, aiDebaters.get(i));
+        }
+
+        debates.put(debate.getId(), debate);
+        return debate;
     }
 
-
-    public void startVoting(Long id){
-
-        Debate debate = debateRepository.findById(id)
-                .orElseThrow(() -> new DebateNotFoundException("Debate not found."));
-
+    public void startVoting(Long id) {
+        Debate debate = getDebate(id);
         debate.setStatus(DebateStatus.VOTING);
-        debateRepository.save(debate);
-
     }
 
-    public boolean canStartDebate(){
-
-        boolean activeDebatePresent = debateRepository.existsByStatus(DebateStatus.ACTIVE);
-
-        boolean votingDebatePresent = debateRepository.existsByStatus(DebateStatus.VOTING);
-
-        return !(votingDebatePresent || activeDebatePresent);
-
+    public boolean canStartDebate() {
+        return debates.values().stream().noneMatch(
+                d -> d.getStatus() == DebateStatus.ACTIVE || d.getStatus() == DebateStatus.VOTING
+        );
     }
 
-    public Debate getDebateById(Long id){
+    public Debate getDebateById(Long id) {
         return getDebate(id);
     }
 
-
-    public Debate getDebate(Long id){
-        return debateRepository.findById(id)
-                .orElseThrow(()-> new DebateNotFoundException("No debate with id " + id +" could be found."));
+    public Debate getDebate(Long id) {
+        Debate debate = debates.get(id);
+        if (debate == null) {
+            throw new DebateNotFoundException("No debate with id " + id + " could be found.");
+        }
+        return debate;
     }
-
 }

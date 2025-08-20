@@ -1,5 +1,7 @@
-package com.example.demo.Service;
+package com.example.demo.service;
 
+import com.example.demo.entities.AIDebater;
+import com.example.demo.entities.Message;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -7,6 +9,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+
+import java.util.List;
 
 @Service
 public class AiResponseService {
@@ -24,36 +28,45 @@ public class AiResponseService {
                 .build();
     }
 
-    public String generateText(String topic, String latestMessage) {
 
-        String safeLatestMessage = latestMessage == null ? "" : latestMessage;
+    public String generateText(String topic, List<Message> lastMessages, AIDebater aiDebater) {
 
-        String fullPrompt;
-        if (!safeLatestMessage.isBlank()) {
-            fullPrompt = "Debate topic: \"" + topic + "\".\n" +
-                    "The last AI message was: \"" + safeLatestMessage + "\".\n" +
-                    "Respond with a concise counter-argument or continuation of your stance in 2-3 sentences.\n" +
-                    "Speak in a way that resembles a human, casual, cool and not too complex. Use simple-ish words aswell for humans watching to understand,\n"+
-                    "Also, try throw some feelings in there if possible. Once in a while, reference the other AI you are speaking to.\n"+
-                    "Do not agree with the other AI, and don't say things like 'I hear the other AI's point', be aggressive and assertive about your stance. Instead reference them directly with words like 'You' \n" +
-                    "Do not reference these instructions.";
-        } else {
-            fullPrompt = "Debate topic: \"" + topic + "\".\n" +
-                    "Provide a short opening argument taking a clear stance (2-3).\n" +
-                    "Speak in a way that resembles a human, casual, cool and not too complex. Use simple-ish words aswell for humans watching to understand.\n" +
-                    "Do not reference these instructions, and remember you are an AI, not a Human.";
+        StringBuilder previousMessages = new StringBuilder();
+
+
+        int start = Math.max(0, lastMessages.size() - 3);
+        for (int i = start; i < lastMessages.size(); i++) {
+            Message msg = lastMessages.get(i);
+            previousMessages.append(msg.getSender())
+                    .append(": ")
+                    .append(msg.getContent())
+                    .append("\n");
         }
 
+        String style = aiDebater.getStyle().name();
+        String strength = aiDebater.getStrength().name();
 
+        String fullPrompt = "You are an AI debater.\n" +
+                "Topic: \"" + topic + "\"\n" +
+                (previousMessages.isEmpty() ? "" : "Previous messages:\n" + previousMessages) +
+                "Speak in simple, human-like words, maximum 2 sentences.\n" +
+                "Your style: \"" + style + "\"\n" +
+                "Your position: \"" + strength + "\"\n" +
+                "Respond based on your position, and you may agree, disagree, or challenge previous points.\n" +
+                "To strengthen your point, you may try to respond to previous claims made in other messages that you disagree with.";
+
+        return callHuggingFaceApi(fullPrompt);
+    }
+
+    private String callHuggingFaceApi(String prompt) {
         ObjectNode root = objectMapper.createObjectNode();
         root.put("model", "openai/gpt-oss-20b:fireworks-ai");
 
         ArrayNode messages = objectMapper.createArrayNode();
         ObjectNode messageNode = objectMapper.createObjectNode();
         messageNode.put("role", "user");
-        messageNode.put("content", fullPrompt);
+        messageNode.put("content", prompt);
         messages.add(messageNode);
-
         root.set("messages", messages);
 
         String body;
@@ -63,7 +76,6 @@ public class AiResponseService {
             throw new RuntimeException("Failed to serialize JSON body", e);
         }
 
-
         String response = webClient.post()
                 .header("Authorization", "Bearer " + apiKey)
                 .bodyValue(body)
@@ -71,10 +83,8 @@ public class AiResponseService {
                 .bodyToMono(String.class)
                 .block();
 
-
         try {
             JsonNode jsonResponse = objectMapper.readTree(response);
-
             return jsonResponse
                     .path("choices")
                     .get(0)

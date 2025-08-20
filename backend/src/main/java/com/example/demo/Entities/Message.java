@@ -1,28 +1,26 @@
-package com.example.demo.Entities;
+package com.example.demo.entities;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Data
+
+@Getter
+@Setter
 public class Message {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private long id;
 
-    @ManyToOne
-    @JoinColumn(name = "debate_id")
-    @JsonIgnore
+    @JsonBackReference
     private Debate debate;
 
     private String sender;
 
-    @Column(columnDefinition = "TEXT")
     private String content;
 
     private LocalDateTime createdAt = LocalDateTime.now();

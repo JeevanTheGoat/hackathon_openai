@@ -1,8 +1,11 @@
-package com.example.demo.Entities;
+package com.example.demo.entities;
 
 public enum DebateWinner {
     TIE,
     AI1,
     AI2,
+    AI3,
+    AI4,
+    AI5,
     NONE
 }

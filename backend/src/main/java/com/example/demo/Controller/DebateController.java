@@ -1,8 +1,8 @@
-package com.example.demo.Controller;
+package com.example.demo.controller;
 
-import com.example.demo.Entities.Debate;
-import com.example.demo.Entities.DebateWinner;
-import com.example.demo.Service.DebateService;
+import com.example.demo.entities.Debate;
+import com.example.demo.entities.DebateRequest;
+import com.example.demo.service.DebateService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +16,8 @@ public class DebateController {
     private final DebateService debateService;
 
     @PostMapping
-    public ResponseEntity<Debate> createDebate(@RequestParam String topic){
-        return ResponseEntity.ok(debateService.createDebate(topic));
+    public ResponseEntity<Debate> createDebate(@RequestBody DebateRequest debateRequest){
+        return ResponseEntity.ok(debateService.createDebate(debateRequest.getTopic(), debateRequest.getAiCount()));
     }
 
 
@@ -31,7 +31,6 @@ public class DebateController {
     public ResponseEntity<Debate> resolveWinner(@PathVariable Long id, HttpSession session){
         return ResponseEntity.ok(debateService.handleDebateWinner(id, session));
     }
-
 
     @PutMapping("/startVoting/{id}")
     public ResponseEntity<String> startVoting(@PathVariable Long id){
