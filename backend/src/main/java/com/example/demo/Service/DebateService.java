@@ -1,6 +1,12 @@
 package com.example.demo.service;
 
-import com.example.demo.entities.*;
+import com.example.demo.entities.enums.DebateStatus;
+import com.example.demo.entities.enums.DebateTurn;
+import com.example.demo.entities.enums.DebateWinner;
+import com.example.demo.entities.models.AIDebater;
+import com.example.demo.entities.models.Debate;
+import com.example.demo.entities.models.TopicQueue;
+import com.example.demo.entities.models.Vote;
 import com.example.demo.exceptions.DebateNotFoundException;
 import com.example.demo.exceptions.OngoingDebateException;
 import jakarta.servlet.http.HttpSession;
@@ -16,6 +22,10 @@ public class DebateService {
     private final AIFactory aiFactory;
 
     private final Map<Long, Debate> debates = new HashMap<>();
+
+    private final TopicQueue topicQueue;
+
+    private final AiResponseService aiResponseService;
 
     private long nextId = 1;
 
@@ -60,10 +70,23 @@ public class DebateService {
         return debate;
     }
 
-    public Debate createDebate(String topic, int aiCount) {
+
+
+    public Debate createDebate(int aiCount) {
 
         if (!canStartDebate()) {
             throw new OngoingDebateException("There is already an ongoing debate.");
+        }
+
+        boolean empty = topicQueue.isEmpty();
+
+        String topic;
+
+        if(!empty){
+            topic = topicQueue.getTopic();
+        }
+        else{
+            topic = aiResponseService.generateTopic();
         }
 
         Debate debate = new Debate();
@@ -83,6 +106,8 @@ public class DebateService {
         debates.put(debate.getId(), debate);
         return debate;
     }
+
+
 
     public void startVoting(Long id) {
         Debate debate = getDebate(id);

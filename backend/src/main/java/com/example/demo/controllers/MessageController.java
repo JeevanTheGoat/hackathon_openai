@@ -1,6 +1,6 @@
-package com.example.demo.controller;
+package com.example.demo.controllers;
 
-import com.example.demo.entities.Message;
+import com.example.demo.entities.models.Message;
 import com.example.demo.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +21,8 @@ public class MessageController {
     }
 
     @PostMapping("/{id}")
-    public Message addMessage(
-            @PathVariable Long id)
-    {
-
-        return messageService.addMessage(id);
+    public ResponseEntity<Message> addMessage(@PathVariable Long id) {
+        return ResponseEntity.ok(messageService.addMessage(id));
     }
 
 

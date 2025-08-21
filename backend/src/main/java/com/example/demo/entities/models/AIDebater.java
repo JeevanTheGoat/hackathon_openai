@@ -1,6 +1,8 @@
-package com.example.demo.entities;
+package com.example.demo.entities.models;
 
 
+import com.example.demo.entities.enums.Strength;
+import com.example.demo.entities.enums.Style;
 import lombok.Getter;
 import lombok.Setter;
 

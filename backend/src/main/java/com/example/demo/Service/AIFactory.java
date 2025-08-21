@@ -1,8 +1,8 @@
 package com.example.demo.service;
 
-import com.example.demo.entities.AIDebater;
-import com.example.demo.entities.Strength;
-import com.example.demo.entities.Style;
+import com.example.demo.entities.models.AIDebater;
+import com.example.demo.entities.enums.Strength;
+import com.example.demo.entities.enums.Style;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

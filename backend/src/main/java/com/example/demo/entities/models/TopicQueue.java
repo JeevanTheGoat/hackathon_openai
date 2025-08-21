@@ -1,8 +1,11 @@
-package com.example.demo.entities;
+package com.example.demo.entities.models;
+
+import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
 import java.util.Queue;
 
+@Component
 public class TopicQueue {
 
     //not done yet

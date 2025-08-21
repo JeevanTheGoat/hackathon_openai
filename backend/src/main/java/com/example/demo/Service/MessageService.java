@@ -1,11 +1,15 @@
 package com.example.demo.service;
 
-import com.example.demo.controller.WebSocketController;
-import com.example.demo.entities.*;
+import com.example.demo.controllers.WebSocketController;
+import com.example.demo.entities.enums.DebateTurn;
+import com.example.demo.entities.models.AIDebater;
+import com.example.demo.entities.models.Debate;
+import com.example.demo.entities.models.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -49,15 +53,15 @@ public class MessageService {
         debate.setNextMessageId(debate.getNextMessageId()+1);
 
 
+        List<DebateTurn> turns = new ArrayList<>(debate.getDebaters().keySet());
+
+        int i = turns.indexOf(turn);
+        int j = (i+1) % turns.size();
+        debate.setTurn(turns.get(j));
 
 
-        switch (turn) {
-            case AI1 -> debate.setTurn(DebateTurn.AI2);
-            case AI2 -> debate.setTurn(DebateTurn.AI3);
-            case AI3 -> debate.setTurn(DebateTurn.AI4);
-            case AI4 -> debate.setTurn(DebateTurn.AI5);
-            case AI5 -> debate.setTurn(DebateTurn.AI1);
-        }
+
+
 
         debate.getMessages().add(message);
 

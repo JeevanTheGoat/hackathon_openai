@@ -1,6 +1,6 @@
-package com.example.demo.controller;
+package com.example.demo.controllers;
 
-import com.example.demo.entities.Message;
+import com.example.demo.entities.models.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;

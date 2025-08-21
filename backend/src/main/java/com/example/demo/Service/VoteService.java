@@ -1,8 +1,8 @@
 package com.example.demo.service;
 
 
-import com.example.demo.entities.Debate;
-import com.example.demo.entities.Vote;
+import com.example.demo.entities.models.Debate;
+import com.example.demo.entities.models.Vote;
 import com.example.demo.exceptions.MultipleVotesException;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;

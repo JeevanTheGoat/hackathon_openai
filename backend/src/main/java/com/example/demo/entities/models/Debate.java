@@ -1,6 +1,9 @@
-package com.example.demo.entities;
+package com.example.demo.entities.models;
 
 
+import com.example.demo.entities.enums.DebateStatus;
+import com.example.demo.entities.enums.DebateTurn;
+import com.example.demo.entities.enums.DebateWinner;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.Getter;

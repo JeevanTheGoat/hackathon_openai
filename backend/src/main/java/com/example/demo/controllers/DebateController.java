@@ -1,7 +1,6 @@
-package com.example.demo.controller;
+package com.example.demo.controllers;
 
-import com.example.demo.entities.Debate;
-import com.example.demo.entities.DebateRequest;
+import com.example.demo.entities.models.Debate;
 import com.example.demo.service.DebateService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -15,9 +14,9 @@ public class DebateController {
 
     private final DebateService debateService;
 
-    @PostMapping
-    public ResponseEntity<Debate> createDebate(@RequestBody DebateRequest debateRequest){
-        return ResponseEntity.ok(debateService.createDebate(debateRequest.getTopic(), debateRequest.getAiCount()));
+    @PostMapping("/{aiCount}")
+    public ResponseEntity<Debate> createDebate(@PathVariable int aiCount){
+        return ResponseEntity.ok(debateService.createDebate(aiCount));
     }
 
 

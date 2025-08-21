@@ -1,7 +1,7 @@
 package com.example.demo.service;
 
-import com.example.demo.entities.AIDebater;
-import com.example.demo.entities.Message;
+import com.example.demo.entities.models.AIDebater;
+import com.example.demo.entities.models.Message;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -26,6 +26,11 @@ public class AiResponseService {
                 .baseUrl("https://router.huggingface.co/v1/chat/completions")
                 .defaultHeader("Content-Type", "application/json")
                 .build();
+    }
+
+    public String generateTopic(){
+        String topicRequest = "Generate an interesting topic for a debate. (1-2 sentences max). Only return the topic, and it does not need to include AI.";
+        return callHuggingFaceApi(topicRequest);
     }
 
 
