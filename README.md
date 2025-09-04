@@ -26,61 +26,114 @@ Multi-AI Debate Simulation: Watch 5 AI debaters argue with structured phases:
 Python 3.9+
 Node.js 18+
 gpt-oss-20b
+Java 17+
 fast api key
+
+#Installation 
 
 1. Clone the Repository
 git clone https://github.com/JeevanTheGoat/hackathon_openai.git
 cd hackathon_openai
-2. Create and Activate Virtual Environment
-python -m venv venv
-source venv/bin/activate
-3. pip install -r requirements.txt
-4. Add Environment Variables
-Create a .env file in the project root:
-OPENAI_API_KEY=your_openai_api_key_here
-5. Run the Backend
-uvicorn main:app --reload
 
-#Usage 
+2. Configure Environment Variables
+
+In src/main/resources/application.properties:
+openai.api.key=YOUR_OPENAI_API_KEY
+server.port=8080
+
+3. Build and Run the Backend
+
+Using Maven:
+mvn clean install
+mvn spring-boot:run
+Your backend will now run at:
+http://localhost:8080
+
+#Usage
 Endpoint: Generate Debate
+
 POST /ai/debate
+
 Example Request
 {
   "topic": "Should artificial intelligence be regulated?",
-  "num_debaters": 7
+  "numDebaters": 7
 }
 
 Example Response
 {
   "topic": "Should artificial intelligence be regulated?",
   "debate": [
-    {"agent": "AI_1", "response": "Yes, AI should be regulated to ensure safety and prevent misuse."},
-    {"agent": "AI_2", "response": "No, regulation may stifle innovation and slow progress."}
+    {
+      "agent": "AI_1",
+      "response": "AI must be regulated to ensure safety and prevent misuse."
+    },
+    {
+      "agent": "AI_2",
+      "response": "Regulation could limit innovation and slow progress."
+    }
   ]
 }
 
 #Testing Instructions
-pytest
 
-Sample Data for Testing
-Create a sample file called sample_input.json:
+We use JUnit for testing and curl for manual endpoint testing.
+
+Run Automated Tests
+mvn test
+
+Manual Testing with Curl
+Create a file named sample_input.json:
 {
   "topic": "Will AI replace human jobs?",
-  "num_debaters": 7
+  "numDebaters": 7
 }
-Run test with:
-curl -X POST http://127.0.0.1:8000/ai/debate \
+Run:
+curl -X POST http://localhost:8080/ai/debate \
 -H "Content-Type: application/json" \
 -d @sample_input.json
 
-#Contributing
+# Sample Output
+{
+  "topic": "Will AI replace human jobs?",
+  "debate": [
+    {
+      "agent": "AI_1",
+      "response": "AI will replace repetitive and dangerous jobs, freeing humans for creative tasks."
+    },
+    {
+      "agent": "AI_2",
+      "response": "While AI will automate some roles, humans will always be needed for oversight and ethics."
+    },
+    {
+      "agent": "AI_3",
+      "response": "Both AI and humans must coexist, with education adapting to this shift."
+    }
+  ]
+}
+
+# Contributing
+
 We welcome contributions!
 To contribute:
 
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
+Fork this repository
 
-#Lisence 
-This project is licensed under the MIT License - see the LICENSE
+Create a new feature branch
+
+Submit a pull request
+
+# License
+
+This project is licensed under the MIT License – see the LICENSE
  file for details.
+
+# Hackathon Checklist
+
+ Clear setup instructions
+
+ Testing data included (sample_input.json)
+
+ Demo-ready backend with /ai/debate endpoint
+
+ Unique project purpose explained clearly
