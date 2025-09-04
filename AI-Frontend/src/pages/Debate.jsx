@@ -54,9 +54,23 @@ export default function DebatePage() {
     const currentProgressIndex = rounds.indexOf(debate.current_round);
     if (currentProgressIndex < rounds.length - 1) {
       const nextRound = rounds[currentProgressIndex + 1];
-      const updatedDebate = await updateDebate(debateId, { current_round: nextRound });
-      setDebate(updatedDebate); // Update local state with response from backend
-      setActiveRound(nextRound);
+      
+      setIsLoading(true); // Add loading state for generating responses
+      
+      try {
+        // First update the round AND trigger AI response generation
+        const updatedDebate = await updateDebate(debateId, { 
+          current_round: nextRound,
+          generate_responses: true // Signal backend to generate responses for this round
+        });
+        
+        setDebate(updatedDebate);
+        setActiveRound(nextRound);
+      } catch (error) {
+        console.error("Error proceeding to next round:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -76,7 +90,7 @@ export default function DebatePage() {
     return aiPersonas.filter(p => debate.selected_ais && debate.selected_ais.includes(p.name));
   };
 
-  if (isLoading) {
+  if (isLoading && !debate) { // Only show full-page loader if debate data itself is loading for the first time
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -136,7 +150,7 @@ export default function DebatePage() {
                   activeRound === round ? 'text-foreground' : 'text-muted-foreground'
                 } ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => !isLocked && setActiveRound(round)}
-                disabled={isLocked}
+                disabled={isLocked || isLoading} // Also disable if generating responses
               >
                 {round}
               </Button>
@@ -144,27 +158,36 @@ export default function DebatePage() {
           })}
         </motion.div>
 
-        {/* Debate Content */}
+        {/* Debate Content with Loading State */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          <AnimatePresence mode="wait">
-            <DebateRound
-              key={activeRound}
-              round={activeRound}
-              personas={activePersonas}
-              responses={roundResponses}
-              userMessage={userMessageForRound}
-              isActive={true}
-            />
-          </AnimatePresence>
+          {isLoading && debate ? ( // Corrected Condition: Show spinner if loading and debate exists
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center space-y-4">
+                <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
+                <p className="text-muted-foreground">Generating AI responses...</p>
+              </div>
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <DebateRound
+                key={activeRound}
+                round={activeRound}
+                personas={activePersonas}
+                responses={roundResponses}
+                userMessage={userMessageForRound}
+                isActive={true}
+              />
+            </AnimatePresence>
+          )}
         </motion.div>
 
-        {/* User Input */}
-        {debate.user_participated && (
+        {/* User Input - only show when not loading */}
+        {debate.user_participated && !isLoading && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -191,6 +214,7 @@ export default function DebatePage() {
               onClick={handleGoToVoting}
               size="lg"
               className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+              disabled={isLoading}
             >
               <CheckSquare className="w-5 h-5" />
               Finish Debate & Go to Voting
@@ -200,9 +224,19 @@ export default function DebatePage() {
               onClick={handleNextRound}
               size="lg"
               className="flex items-center gap-2"
+              disabled={isLoading}
             >
-              Proceed to {rounds[currentProgressIndex + 1]}
-              <ArrowRight className="w-5 h-5" />
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  Proceed to {rounds[currentProgressIndex + 1]}
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </Button>
           )}
         </motion.div>
