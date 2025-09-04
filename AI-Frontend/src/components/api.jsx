@@ -5,7 +5,7 @@
  *
  * This file contains the functions the frontend uses to talk to the backend.
  * Your task is to replace the MOCK LOGIC in the 3 functions below with
- * real API calls (`fetch`) to your endpoints.
+ * real API calls (`fetch`) to endpoints.
  *
  * The mock logic is here so the app works for demonstration purposes.
  * Just replace the sections marked with "--- MOCK LOGIC (to be replaced) ---".
@@ -31,7 +31,7 @@ export const manageDebate = async ({ method, debateId, data }) => {
   console.log(`API CALL: manageDebate`, { method, debateId, data });
 
   // --- MOCK LOGIC (to be replaced) ---
-  // TODO: Replace the mock logic below with a single fetch call to your main debate endpoint.
+  // TODO: Replace the mock logic below with a single fetch call to main debate endpoint.
   // EXAMPLE:
   //   const url = debateId ? `/api/debates/${debateId}` : '/api/debates';
   //   const response = await fetch(url, { method, body: data ? JSON.stringify(data) : undefined, headers: {'Content-Type': 'application/json'} });
@@ -97,7 +97,7 @@ export const submitVotes = async (debateId, votes) => {
   console.log(`API CALL: submitVotes(${debateId})`, votes);
   
   // --- MOCK LOGIC (to be replaced) ---
-  // TODO: Replace this with a fetch call to your voting endpoint.
+  // TODO: Replace this with a fetch call to voting endpoint.
   // EXAMPLE:
   //   const response = await fetch(`/api/votes/${debateId}`, { method: 'POST', body: JSON.stringify(votes), headers: {'Content-Type': 'application/json'} });
   //   return response.json();
@@ -129,7 +129,7 @@ export const fetchLeaderboardData = async () => {
   console.log("API CALL: fetchLeaderboardData");
   
   // --- MOCK LOGIC (to be replaced) ---
-  // TODO: Replace this with a fetch call to your leaderboard endpoint.
+  // TODO: Replace this with a fetch call to leaderboard endpoint.
   // EXAMPLE:
   //   const response = await fetch('/api/leaderboard');
   //   return response.json();
