@@ -64,7 +64,8 @@ export default function DebatePage() {
           generate_responses: true // Signal backend to generate responses for this round
         });
         
-        setDebate(updatedDebate);
+        
+        setDebate({ ...updatedDebate });
         setActiveRound(nextRound);
       } catch (error) {
         console.error("Error proceeding to next round:", error);
@@ -86,11 +87,10 @@ export default function DebatePage() {
 
   const getActivePersonas = () => {
     if (!debate) return [];
-    // Now use the selected_ais array instead of mode/selected_ai
     return aiPersonas.filter(p => debate.selected_ais && debate.selected_ais.includes(p.name));
   };
 
-  if (isLoading && !debate) { // Only show full-page loader if debate data itself is loading for the first time
+  if (isLoading && !debate) { 
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -165,7 +165,7 @@ export default function DebatePage() {
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          {isLoading && debate ? ( // Corrected Condition: Show spinner if loading and debate exists
+          {isLoading && debate ? ( 
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-4">
                 <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
