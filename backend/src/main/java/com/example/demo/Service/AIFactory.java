@@ -4,39 +4,61 @@ import com.example.demo.entities.models.AIDebater;
 import com.example.demo.entities.enums.Strength;
 import com.example.demo.entities.enums.Style;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 @Service
 public class AIFactory {
 
+    private final List<AIDebater> masterAIs = new ArrayList<>();
     Random rand = new Random();
 
-    public List<AIDebater> createNewDebaters(int aiCount) {
+    public AIFactory() {
 
-        List<AIDebater> aiDebaters = new ArrayList<>();
+        int idCounter = 1;
 
-        List<Style> styles = new ArrayList<>(Arrays.asList(Style.values()));
-        List<Strength> strengths = new ArrayList<>(Arrays.asList(Strength.values()));
-
-        for (int i = 0; i < aiCount; i++) {
-
+        for(Style style: Style.values()){
             AIDebater aiDebater = new AIDebater();
-
-
-            Style style = styles.remove(rand.nextInt(styles.size()));
-            Strength strength = strengths.remove(rand.nextInt(strengths.size()));
-
+            aiDebater.setId(idCounter);
             aiDebater.setStyle(style);
-            aiDebater.setStrength(strength);
-            aiDebater.setId(i + 1);
-
-            aiDebaters.add(aiDebater);
+            idCounter++;
+            masterAIs.add(aiDebater);
         }
+    }
 
-        return aiDebaters;
+
+    public List<AIDebater> getMasterAIs() {
+        return masterAIs;
+    }
+
+    public List<AIDebater> createDebateAIs(List<String> aiNames){
+
+        List<AIDebater> masterAis = getMasterAIs();
+        List<AIDebater> tempAis = new ArrayList<>();
+        List<AIDebater> debateAis = new ArrayList<>();
+
+
+
+        for(String aiName: aiNames){
+
+            AIDebater debateAI = new AIDebater();
+
+
+            AIDebater matchingMasterAi = masterAis.stream()
+                    .filter(m -> m.getStyle().name().equals(aiName))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("No master AI found for style: " + aiName));
+
+            debateAI.setStyle(matchingMasterAi.getStyle());
+            debateAI.setStrength(Strength.values()[rand.nextInt(Strength.values().length)]);
+
+
+            debateAI.setId(matchingMasterAi.getId()*10);
+            debateAis.add(debateAI);
+
+        }
+        return debateAis;
     }
 }
+

@@ -16,4 +16,12 @@ public class AIDebater {
 
     private Style style;
 
+    private int funnyVotes;
+
+    private int creativeVotes;
+
+    private int wins;
+
+    private int played;
+
 }

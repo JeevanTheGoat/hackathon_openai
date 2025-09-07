@@ -9,12 +9,10 @@ import lombok.Setter;
 @Setter
 public class Vote {
 
+    private String bestArgument;
 
-    private Long id;
+    private String funniest;
 
-    @JsonBackReference
-    private Debate debate;
-
-    private String choice;
+    private String mostCreative;
 
 }

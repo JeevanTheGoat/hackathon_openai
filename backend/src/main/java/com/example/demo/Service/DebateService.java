@@ -1,134 +1,170 @@
 package com.example.demo.service;
 
+import com.example.demo.entities.enums.DebateRound;
 import com.example.demo.entities.enums.DebateStatus;
-import com.example.demo.entities.enums.DebateTurn;
-import com.example.demo.entities.enums.DebateWinner;
-import com.example.demo.entities.models.AIDebater;
-import com.example.demo.entities.models.Debate;
-import com.example.demo.entities.models.TopicQueue;
-import com.example.demo.entities.models.Vote;
+import com.example.demo.entities.models.*;
+import com.example.demo.entities.models.dtos.DebateDTO;
+import com.example.demo.entities.models.dtos.DebateResponse;
+import com.example.demo.entities.models.dtos.DebateUpdateDTO;
 import com.example.demo.exceptions.DebateNotFoundException;
-import com.example.demo.exceptions.OngoingDebateException;
-import jakarta.servlet.http.HttpSession;
+import com.example.demo.holder.DebateHolder;
+import com.example.demo.mapper.DebateMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DebateService {
 
     private final AIFactory aiFactory;
-
-    private final Map<Long, Debate> debates = new HashMap<>();
-
-    private final TopicQueue topicQueue;
-
+    private final DebateHolder debateHolder;
     private final AiResponseService aiResponseService;
+
+    public List<Debate> getAllDebatesAsList(){
+        return new ArrayList<>(debateHolder.getDebates().values());
+    }
+
+    private Map<Long, Debate> getDebates(){
+        return debateHolder.getDebates();
+    }
+
+
 
     private long nextId = 1;
 
-    public Debate handleDebateWinner(Long id, HttpSession session) {
 
-        Debate debate = getDebate(id);
 
-        List<Vote> votes = debate.getVotes();
-
-        Map<String, Long> voteCounts = new HashMap<>();
-        String winner = "";
-        long maxVotes = 0;
-        boolean tie = false;
-
-        for (int i = 1; i <= debate.getDebaters().size(); i++) {
-            String ai = "AI" + i;
-            long count = votes.stream()
-                    .filter(v -> v.getChoice().equals(ai))
-                    .count();
-            voteCounts.put(ai, count);
-
-            if (count > maxVotes) {
-                winner = ai;
-                maxVotes = count;
-                tie = false;
-            } else if (count == maxVotes) {
-                tie = true;
-            }
-        }
-
-        if (tie) {
-            debate.setWinner(DebateWinner.TIE);
-        } else {
-            debate.setWinner(DebateWinner.valueOf(winner));
-        }
-
-        debate.setStatus(DebateStatus.FINISHED);
-        debate.getDebaters().clear();
-
-        session.removeAttribute("voted_" + id + "_" + session.getId());
-
-        return debate;
+    public void deleteDebate(Long id){
+        Debate debate = getDebateById(id);
+        debateHolder.getDebates().remove(id);
     }
 
 
+    public Debate createDebate(DebateDTO debateDTO) {
 
-    public Debate createDebate(int aiCount) {
 
-        if (!canStartDebate()) {
-            throw new OngoingDebateException("There is already an ongoing debate.");
-        }
-
-        boolean empty = topicQueue.isEmpty();
-
-        String topic;
-
-        if(!empty){
-            topic = topicQueue.getTopic();
-        }
-        else{
-            topic = aiResponseService.generateTopic();
-        }
-
+        String topic = debateDTO.getTopic();
         Debate debate = new Debate();
+
         debate.setId(nextId++);
         debate.setTopic(topic);
         debate.setStatus(DebateStatus.ACTIVE);
+        debate.setUser_participated(debateDTO.isUser_participated());
 
-        Map<DebateTurn, AIDebater> debaters = debate.getDebaters();
+        List<String> aiNames = debateDTO.getSelected_ais();
 
-        List<AIDebater> aiDebaters = aiFactory.createNewDebaters(aiCount);
+        List<AIDebater> debateAis = aiFactory.createDebateAIs(aiNames);
+        debate.setDebaters(debateAis);
 
-        for (int i = 0; i < aiDebaters.size(); i++) {
-            DebateTurn turn = DebateTurn.values()[i];
-            debaters.put(turn, aiDebaters.get(i));
+        debateHolder.getDebates().put(debate.getId(), debate);
+        List<Response> responses =  addMessage(debate.getId());
+        debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
+
+        return debate;
+    }
+
+    public Debate updateDebate(Long id, DebateUpdateDTO dto){
+
+
+
+        Debate debate = getDebateById(id);
+
+        if (debate.getUser_messages() == null) {
+            debate.setUser_messages(new HashMap<>());
+        }
+        if (debate.getRoundsData() == null) {
+            debate.setRoundsData(new HashMap<>());
         }
 
-        debates.put(debate.getId(), debate);
+        String currentRound = dto.getCurrent_round();
+
+        if (currentRound != null) {
+            for (DebateRound round : DebateRound.values()) {
+                if (currentRound.equalsIgnoreCase(round.name())) {
+                    debate.setRound(round);
+                    break;
+                }
+            }
+        }
+
+
+        if(dto.isGenerate_responses() && debate.getRoundsData().get(currentRound).isEmpty()){
+            List<Response> responses = addMessage(id);
+            debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
+        }
+
+        if(debate.isUser_participated() && dto.getUser_messages() != null){
+
+            debate.getUser_messages().put(debate.getRound().name().toLowerCase(), dto.getUser_messages().get(debate.getRound().name().toLowerCase()));
+
+
+        }
+
+
+        debateHolder.getDebates().put(id, debate);
         return debate;
     }
 
 
-
-    public void startVoting(Long id) {
-        Debate debate = getDebate(id);
-        debate.setStatus(DebateStatus.VOTING);
-    }
-
-    public boolean canStartDebate() {
-        return debates.values().stream().noneMatch(
-                d -> d.getStatus() == DebateStatus.ACTIVE || d.getStatus() == DebateStatus.VOTING
-        );
+    public DebateResponse getDebateResponseById(Long id) {
+        Debate debate = debateHolder.getDebates().get(id);
+        if (debate == null) {
+            throw new DebateNotFoundException("No debate with id " + id + " could be found.");
+        }
+        return DebateMapper.debateToDTO(debate);
     }
 
     public Debate getDebateById(Long id) {
-        return getDebate(id);
-    }
-
-    public Debate getDebate(Long id) {
-        Debate debate = debates.get(id);
+        Debate debate = debateHolder.getDebates().get(id);
         if (debate == null) {
             throw new DebateNotFoundException("No debate with id " + id + " could be found.");
         }
         return debate;
+    }
+
+
+    public List<Response> addMessage(Long id) {
+
+        Debate debate = getDebateById(id);
+
+
+
+        DebateRound debateRound = debate.getRound();
+
+        List<Response> history = new ArrayList<>(debate.getRoundsData().values().stream()
+                .flatMap(List::stream)
+                .toList());
+
+
+        List<Response> currMessages = debate.getRoundsData()
+                .computeIfAbsent(debateRound.name().toLowerCase(), k -> new ArrayList<>());
+        String topic = debate.getTopic();
+
+
+        List<AIDebater> debateAis = debate.getDebaters();
+
+        List<String> responses = aiResponseService.generateMultipleTexts(topic, history, debateAis, debateRound);
+
+        for (int i = 0; i < debateAis.size(); i++) {
+            AIDebater debater = debateAis.get(i);
+            String response = responses.get(i);
+
+            Response message = new Response();
+            message.setCreatedAt(LocalDateTime.now());
+            message.setDebate(debate);
+            message.setRound(debateRound);
+            message.setContent(response);
+            message.setSender(debater.getStyle().name());
+            message.setId(debate.getNextMessageId());
+            debate.setNextMessageId(debate.getNextMessageId() + 1);
+
+            currMessages.add(message);
+        }
+        return currMessages;
     }
 }

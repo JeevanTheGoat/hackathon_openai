@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -28,26 +28,65 @@ export default function DebateRound({
 }) {
   const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
 
+  // Debug logging
+  console.log(`DebateRound rendered:`, {
+    round,
+    responsesLength: responses?.length || 0,
+    responses: responses,
+    currentResponseIndex,
+    userMessage: !!userMessage
+  });
+
+  useEffect(() => {
+    console.log(`DebateRound useEffect: responses changed`, {
+      round,
+      responsesLength: responses?.length || 0
+    });
+    
+    // Reset to first response when new data comes in
+    setCurrentResponseIndex(0);
+  }, [responses, round]);
+
   if (!isActive) return null;
 
-  const totalResponses = responses.length + (userMessage ? 1 : 0);
+  // Defensive programming - handle undefined/null responses
+  const safeResponses = responses || [];
+  const totalResponses = safeResponses.length + (userMessage ? 1 : 0);
   const hasUserMessage = !!userMessage;
   
+  // Additional safety check
+  if (totalResponses === 0) {
+    console.warn(`No responses available for round ${round}`, { safeResponses, userMessage });
+    return (
+      <div className="text-center p-8">
+        <p className="text-muted-foreground">No responses available for this round yet.</p>
+      </div>
+    );
+  }
+  
   const handleNext = () => {
+    console.log(`Next clicked:`, { currentResponseIndex, totalResponses });
     if (currentResponseIndex < totalResponses - 1) {
       setCurrentResponseIndex(currentResponseIndex + 1);
     }
   };
 
   const handlePrevious = () => {
+    console.log(`Previous clicked:`, { currentResponseIndex });
     if (currentResponseIndex > 0) {
       setCurrentResponseIndex(currentResponseIndex - 1);
     }
   };
 
-  const isShowingUserMessage = hasUserMessage && currentResponseIndex === responses.length;
-  const currentResponse = isShowingUserMessage ? null : responses[currentResponseIndex];
+  const isShowingUserMessage = hasUserMessage && currentResponseIndex === safeResponses.length;
+  const currentResponse = isShowingUserMessage ? null : safeResponses[currentResponseIndex];
   const currentPersona = currentResponse ? personas.find(p => p.name === currentResponse.sender) : null;
+
+  console.log(`Current display state:`, {
+    isShowingUserMessage,
+    currentResponse,
+    currentPersona: currentPersona?.name || 'none'
+  });
 
   return (
     <motion.div
@@ -87,12 +126,16 @@ export default function DebateRound({
             />
           ) : currentResponse && currentPersona ? (
             <PersonaBubble
-              key={`${currentResponse.sender}-${currentResponseIndex}`}
+              key={`${currentResponse.sender}-${currentResponseIndex}-${round}`}
               persona={currentPersona}
               message={currentResponse.content}
               delay={0}
             />
-          ) : null}
+          ) : (
+            <div className="text-center p-4">
+              <p className="text-muted-foreground">No response available</p>
+            </div>
+          )}
         </AnimatePresence>
       </div>
 

@@ -1,41 +1,53 @@
 package com.example.demo.controllers;
 
 import com.example.demo.entities.models.Debate;
+import com.example.demo.entities.models.dtos.DebateDTO;
+import com.example.demo.entities.models.dtos.DebateResponse;
+import com.example.demo.entities.models.dtos.DebateUpdateDTO;
 import com.example.demo.service.DebateService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/debates")
+@RequestMapping("/api/debates")
 public class DebateController {
+    
+    //ALLOW USER TO PARTICIPATE IN DEBATES
+    //402 PAYMENT_REQUIRED
 
     private final DebateService debateService;
 
-    @PostMapping("/{aiCount}")
-    public ResponseEntity<Debate> createDebate(@PathVariable int aiCount){
-        return ResponseEntity.ok(debateService.createDebate(aiCount));
+    @PostMapping
+    public ResponseEntity<Debate> createDebate(@RequestBody DebateDTO debateDTO){
+        return ResponseEntity.ok(debateService.createDebate(debateDTO));
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<Debate> getDebateById(@PathVariable Long id){
-        return ResponseEntity.ok(debateService.getDebateById(id));
+    public ResponseEntity<DebateResponse> getDebateResponseById(@PathVariable Long id){
+        return ResponseEntity.ok(debateService.getDebateResponseById(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Debate>> getAllDebates(){
+        return ResponseEntity.ok(debateService.getAllDebatesAsList());
     }
 
 
-    @PostMapping("/resolveWinner/{id}")
-    public ResponseEntity<Debate> resolveWinner(@PathVariable Long id, HttpSession session){
-        return ResponseEntity.ok(debateService.handleDebateWinner(id, session));
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDebate(@PathVariable Long id){
+        debateService.deleteDebate(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/startVoting/{id}")
-    public ResponseEntity<String> startVoting(@PathVariable Long id){
+    @PatchMapping("/{id}")
+    public ResponseEntity<Debate> updateDebate(@PathVariable Long id, @RequestBody DebateUpdateDTO data){
 
-        debateService.startVoting(id);
-        return ResponseEntity.ok("Voting has begun.");
+        return ResponseEntity.ok(debateService.updateDebate(id, data));
 
     }
 

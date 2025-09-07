@@ -1,10 +1,10 @@
 package com.example.demo.service;
 
 
+
+import com.example.demo.entities.models.AIDebater;
 import com.example.demo.entities.models.Debate;
 import com.example.demo.entities.models.Vote;
-import com.example.demo.exceptions.MultipleVotesException;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,32 +14,35 @@ public class VoteService {
 
 
     private final DebateService debateService;
+    private final AIFactory aiFactory;
 
-    public String recordVote(String choice, Long debateId, HttpSession session){
+    public Vote recordVote(Vote vote, Long id){
 
-        if(session.getAttribute("voted_"+debateId+"_"+session.getId()) != null){
-            throw new MultipleVotesException("Multiple votes must not be placed.");
-        }
-
-
-
-        Debate debate = debateService.getDebate(debateId);
-
-        Vote vote = new Vote();
-        vote.setChoice(choice);
-        vote.setDebate(debate);
-
+        Debate debate = debateService.getDebateById(id);
 
         debate.getVotes().add(vote);
 
 
-        session.setAttribute("voted_"+debateId+"_"+session.getId(), true);
 
-        return "Vote has been recorded.";
+        for(AIDebater aiDebater: aiFactory.getMasterAIs()){
+
+            String name = aiDebater.getStyle().toString();
+
+            if(name.equals(vote.getFunniest())){
+                aiDebater.setFunnyVotes(aiDebater.getFunnyVotes() + 1);
+            }
+            if(name.equals(vote.getMostCreative())){
+                aiDebater.setCreativeVotes(aiDebater.getCreativeVotes() + 1);
+            }
+            if(name.equals(vote.getBestArgument())){
+                aiDebater.setWins(aiDebater.getWins() + 1);
+            }
+
+        }
 
 
 
-
+        return vote;
 
     }
 

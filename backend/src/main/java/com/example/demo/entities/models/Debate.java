@@ -1,9 +1,10 @@
 package com.example.demo.entities.models;
 
 
+import com.example.demo.entities.enums.DebateRound;
 import com.example.demo.entities.enums.DebateStatus;
-import com.example.demo.entities.enums.DebateTurn;
 import com.example.demo.entities.enums.DebateWinner;
+import com.example.demo.service.DebateService;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import lombok.Getter;
@@ -15,6 +16,13 @@ import java.util.*;
 @Setter
 public class Debate {
 
+    public Debate(){
+        roundsData.put("opening", new ArrayList<>());
+        roundsData.put("rebuttal", new ArrayList<>());
+        roundsData.put("crosstalk", new ArrayList<>());
+        roundsData.put("closing", new ArrayList<>());
+    }
+
 
     private long id;
 
@@ -24,15 +32,19 @@ public class Debate {
     private List<Vote> votes = new ArrayList<>();
 
     @JsonManagedReference
-    private List<Message> messages = new ArrayList<>();
+    private Map<String, List<Response>> roundsData = new HashMap<>();
 
     private int nextMessageId = 1;
 
-    private Map<DebateTurn, AIDebater> debaters = new HashMap<>();
+    private boolean user_participated;
+
+    private Map<String, String> user_messages;
+
+    private List<AIDebater> debaters = new ArrayList<>();
 
     private DebateStatus status = DebateStatus.PENDING;
     private DebateWinner winner = DebateWinner.NONE;
-    private DebateTurn turn = DebateTurn.AI1;
+    private DebateRound round = DebateRound.OPENING;
 
 
 }

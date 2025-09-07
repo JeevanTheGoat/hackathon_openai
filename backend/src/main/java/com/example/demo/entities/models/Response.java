@@ -1,6 +1,7 @@
 package com.example.demo.entities.models;
 
 
+import com.example.demo.entities.enums.DebateRound;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import lombok.Getter;
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-public class Message {
+public class Response {
 
 
     private long id;
@@ -22,6 +23,8 @@ public class Message {
     private String sender;
 
     private String content;
+
+    private DebateRound round;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }
