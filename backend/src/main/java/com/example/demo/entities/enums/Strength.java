@@ -5,7 +5,5 @@ public enum Strength {
     MODERATELY_FOR,
     STRONGLY_AGAINST,
     MODERATELY_AGAINST,
-    MIXED,
-
-
+    MIXED
 }
