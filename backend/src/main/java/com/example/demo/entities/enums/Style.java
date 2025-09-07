@@ -1,7 +1,6 @@
 package com.example.demo.entities.enums;
 
 public enum Style {
-
     FUNNY,
     NICE,
     AGGRESSIVE,
@@ -9,5 +8,4 @@ public enum Style {
     ANGRY,
     CREATIVE,
     SERIOUS
-
 }
