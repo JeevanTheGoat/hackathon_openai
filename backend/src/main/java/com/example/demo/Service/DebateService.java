@@ -58,6 +58,7 @@ public class DebateService {
         debate.setDebaters(debateAis);
 
         debateHolder.getDebates().put(debate.getId(), debate);
+
         List<Response> responses = addMessage(debate.getId());
         debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
 
@@ -67,9 +68,14 @@ public class DebateService {
     public Debate updateDebate(Long id, DebateUpdateDTO dto) {
         Debate debate = getDebateById(id);
 
-        if (debate.getUser_messages() == null) debate.setUser_messages(new java.util.HashMap<>());
-        if (debate.getRoundsData() == null) debate.setRoundsData(new java.util.HashMap<>());
+        if (debate.getUser_messages() == null) {
+            debate.setUser_messages(new java.util.HashMap<>());
+        }
+        if (debate.getRoundsData() == null) {
+            debate.setRoundsData(new java.util.HashMap<>());
+        }
 
+        // Update current round if provided
         String currentRound = dto.getCurrent_round();
         if (currentRound != null) {
             for (DebateRound round : DebateRound.values()) {
@@ -80,6 +86,7 @@ public class DebateService {
             }
         }
 
+        // Generate responses if needed
         if (dto.isGenerate_responses()) {
             List<Response> roundMessages = debate.getRoundsData()
                     .computeIfAbsent(debate.getRound().name().toLowerCase(), k -> new ArrayList<>());
@@ -89,11 +96,13 @@ public class DebateService {
             }
         }
 
+        // Save user messages if user participated
         if (debate.isUser_participated() && dto.getUser_messages() != null) {
             debate.getUser_messages().put(
                     debate.getRound().name().toLowerCase(),
                     dto.getUser_messages().get(debate.getRound().name().toLowerCase())
             );
+        }
 
         debateHolder.getDebates().put(id, debate);
         return debate;
@@ -101,13 +110,17 @@ public class DebateService {
 
     public DebateResponse getDebateResponseById(Long id) {
         Debate debate = debateHolder.getDebates().get(id);
-        if (debate == null) throw new DebateNotFoundException("No debate with id " + id + " could be found.");
+        if (debate == null) {
+            throw new DebateNotFoundException("No debate with id " + id + " could be found.");
+        }
         return DebateMapper.debateToDTO(debate);
     }
 
     public Debate getDebateById(Long id) {
         Debate debate = debateHolder.getDebates().get(id);
-        if (debate == null) throw new DebateNotFoundException("No debate with id " + id + " could be found.");
+        if (debate == null) {
+            throw new DebateNotFoundException("No debate with id " + id + " could be found.");
+        }
         return debate;
     }
 
@@ -115,6 +128,7 @@ public class DebateService {
         Debate debate = getDebateById(id);
         DebateRound debateRound = debate.getRound();
 
+        // Combine all previous messages into history
         List<Response> history = debate.getRoundsData().values().stream()
                 .flatMap(List::stream)
                 .collect(Collectors.toList());
@@ -125,6 +139,7 @@ public class DebateService {
         List<AIDebater> debateAis = debate.getDebaters();
         String topic = debate.getTopic();
 
+        // Generate new AI responses
         List<String> responses = aiResponseService.generateMultipleTexts(topic, history, debateAis, debateRound);
 
         for (int i = 0; i < debateAis.size(); i++) {
@@ -138,8 +153,8 @@ public class DebateService {
             message.setContent(response);
             message.setSender(debater.getStyle().name());
             message.setId(debate.getNextMessageId());
-            debate.setNextMessageId(debate.getNextMessageId() + 1);
 
+            debate.setNextMessageId(debate.getNextMessageId() + 1);
             currMessages.add(message);
         }
 
