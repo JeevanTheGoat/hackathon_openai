@@ -94,7 +94,6 @@ public class DebateService {
                     debate.getRound().name().toLowerCase(),
                     dto.getUser_messages().get(debate.getRound().name().toLowerCase())
             );
-        }
 
         debateHolder.getDebates().put(id, debate);
         return debate;
