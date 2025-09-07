@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -79,9 +80,13 @@ public class DebateService {
             }
         }
 
-        if (dto.isGenerate_responses() && debate.getRoundsData().get(currentRound).isEmpty()) {
-            List<Response> responses = addMessage(id);
-            debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
+        if (dto.isGenerate_responses()) {
+            List<Response> roundMessages = debate.getRoundsData()
+                    .computeIfAbsent(debate.getRound().name().toLowerCase(), k -> new ArrayList<>());
+            if (roundMessages.isEmpty()) {
+                List<Response> responses = addMessage(id);
+                debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
+            }
         }
 
         if (debate.isUser_participated() && dto.getUser_messages() != null) {
@@ -111,16 +116,15 @@ public class DebateService {
         Debate debate = getDebateById(id);
         DebateRound debateRound = debate.getRound();
 
-        List<Response> history = new ArrayList<>(debate.getRoundsData().values().stream()
+        List<Response> history = debate.getRoundsData().values().stream()
                 .flatMap(List::stream)
-                .toList()
-        );
+                .collect(Collectors.toList());
 
         List<Response> currMessages = debate.getRoundsData()
                 .computeIfAbsent(debateRound.name().toLowerCase(), k -> new ArrayList<>());
 
-        String topic = debate.getTopic();
         List<AIDebater> debateAis = debate.getDebaters();
+        String topic = debate.getTopic();
 
         List<String> responses = aiResponseService.generateMultipleTexts(topic, history, debateAis, debateRound);
 
