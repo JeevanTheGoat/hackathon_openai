@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
@@ -27,6 +27,12 @@ export default function DebateRound({
   isActive 
 }) {
   const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
+
+  // FORCE component to re-render when responses change
+  useEffect(() => {
+    console.log(`DebateRound: Received ${responses.length} responses for round ${round}`, responses);
+    setCurrentResponseIndex(0); // Reset to first response when new data comes in
+  }, [responses, round]);
 
   if (!isActive) return null;
 

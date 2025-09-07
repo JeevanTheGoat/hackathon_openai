@@ -55,18 +55,29 @@ export default function DebatePage() {
     if (currentProgressIndex < rounds.length - 1) {
       const nextRound = rounds[currentProgressIndex + 1];
       
-      setIsLoading(true); // Add loading state for generating responses
+      setIsLoading(true);
       
       try {
-        // First update the round AND trigger AI response generation
+        // Update the debate and get fresh data
         const updatedDebate = await updateDebate(debateId, { 
           current_round: nextRound,
-          generate_responses: true // Signal backend to generate responses for this round
+          generate_responses: true
         });
         
+        // NUCLEAR OPTION: Force a complete re-render by creating entirely new objects
+        const completelyFreshDebate = {
+          ...updatedDebate,
+          rounds_data: updatedDebate.rounds_data ? {
+            ...updatedDebate.rounds_data,
+            [nextRound]: [...(updatedDebate.rounds_data[nextRound] || [])]
+          } : {},
+          // Force new timestamp to guarantee React sees this as different
+          _forceRefresh: Date.now()
+        };
         
-        setDebate({ ...updatedDebate });
+        setDebate(completelyFreshDebate);
         setActiveRound(nextRound);
+        
       } catch (error) {
         console.error("Error proceeding to next round:", error);
       } finally {
@@ -87,10 +98,11 @@ export default function DebatePage() {
 
   const getActivePersonas = () => {
     if (!debate) return [];
+    // Now use the selected_ais array instead of mode/selected_ai
     return aiPersonas.filter(p => debate.selected_ais && debate.selected_ais.includes(p.name));
   };
 
-  if (isLoading && !debate) { 
+  if (isLoading && !debate) { // Only show full-page loader if debate data itself is loading for the first time
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -165,7 +177,7 @@ export default function DebatePage() {
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          {isLoading && debate ? ( 
+          {isLoading && debate ? ( // Corrected Condition: Show spinner if loading and debate exists
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-4">
                 <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
