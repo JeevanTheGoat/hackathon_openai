@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, RotateCcw, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { createPageUrl } from '../components/utils'; // Changed import path
+import { createPageUrl } from '../components/utils';
 import { useDebates } from '../components/DebatesContext';
 import { aiPersonas } from '../components/MockData'; // Only for static avatar/style info
 import VotingPanel from '../components/VotingPanel';
@@ -13,47 +13,25 @@ import VotingPanel from '../components/VotingPanel';
 export default function ResultsPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { getDebateById, submitVotes } = useDebates();
+  // Get data and actions from the context
+  const { activeDebate, getDebateById, submitVotes, isConnected } = useDebates();
   const debateId = searchParams.get('id');
-  
-  const [debate, setDebate] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadDebate = useCallback(async () => {
-    if (!debateId) {
-      navigate(createPageUrl('Home'));
-      return;
-    }
-    
-    setIsLoading(true);
-    try {
-      const debateData = await getDebateById(debateId);
-      if (debateData) {
-        setDebate(debateData);
-      } else {
-        navigate(createPageUrl('Home'));
-      }
-    } catch (error) {
-      console.error('Error loading debate results:', error);
-      navigate(createPageUrl('Home'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [debateId, getDebateById, navigate]);
 
   useEffect(() => {
-    loadDebate();
-  }, [loadDebate]);
+    // Request the debate details when the page loads
+    if (debateId && isConnected) {
+      getDebateById(debateId);
+    }
+  }, [debateId, isConnected, getDebateById]);
 
-  const handleVote = async (voteData) => {
-    const finalVotes = await submitVotes(debateId, voteData);
-    setDebate(prev => ({ ...prev, votes: finalVotes, current_round: 'results' }));
+  const handleVote = (voteData) => {
+    // This is now a fire-and-forget operation. UI will update when WebSocket sends new data.
+    submitVotes(debateId, voteData);
   };
 
   const getActivePersonas = () => {
-    if (!debate) return [];
-    // Updated logic to filter personas based on debate.selected_ais array
-    return aiPersonas.filter(p => debate.selected_ais && debate.selected_ais.includes(p.name));
+    if (!activeDebate) return [];
+    return aiPersonas.filter(p => activeDebate.selected_ais && activeDebate.selected_ais.includes(p.name));
   };
 
   const handleStartNew = () => {
@@ -64,19 +42,18 @@ export default function ResultsPage() {
     navigate(createPageUrl('Leaderboard'));
   };
 
-  if (isLoading) {
+  if (!isConnected || !activeDebate) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading results...</p>
+          <p className="text-muted-foreground">{!isConnected ? 'Connecting...' : 'Loading results...'}</p>
         </div>
       </div>
     );
   }
 
-  if (!debate) return null;
-
+  const debate = activeDebate;
   const activePersonas = getActivePersonas();
   const hasVoted = !!debate.votes;
 

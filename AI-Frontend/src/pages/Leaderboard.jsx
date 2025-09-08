@@ -10,33 +10,31 @@ import { createPageUrl } from '../components/utils'; // Corrected import path
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
-  const { fetchLeaderboardData } = useDebates(); // Get function from context
-  const [leaderboardData, setLeaderboardData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  // Get data and actions directly from the context
+  const { leaderboardData, fetchLeaderboardData, isConnected } = useDebates();
+  const [sortedData, setSortedData] = useState([]);
 
   useEffect(() => {
-    const loadLeaderboard = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchLeaderboardData();
-        const sortedData = [...data].sort((a, b) => b.wins - a.wins);
-        setLeaderboardData(sortedData);
-      } catch (error) {
-        console.error('Error loading leaderboard:', error);
-        // TODO: Display an error message to the user
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadLeaderboard();
-  }, [fetchLeaderboardData]); // Add fetchLeaderboardData to dependency array
+    // Request data when component mounts if connected
+    if (isConnected) {
+      fetchLeaderboardData();
+    }
+  }, [isConnected, fetchLeaderboardData]);
 
-  if (isLoading) {
+  useEffect(() => {
+    // When new data arrives, sort it for display
+    if (leaderboardData) {
+      const data = [...leaderboardData].sort((a, b) => b.wins - a.wins);
+      setSortedData(data);
+    }
+  }, [leaderboardData]);
+
+  if (!isConnected || leaderboardData.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading leaderboard...</p>
+          <p className="text-muted-foreground">{!isConnected ? 'Connecting...' : 'Loading leaderboard...'}</p>
         </div>
       </div>
     );
@@ -67,7 +65,7 @@ export default function LeaderboardPage() {
 
         {/* Leaderboard Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
-          {leaderboardData.map((stats, index) => (
+          {sortedData.map((stats, index) => (
             <LeaderboardCard
               key={stats.name}
               persona={stats.name}

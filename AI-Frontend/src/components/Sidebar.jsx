@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 export default function Sidebar() {
-  const { debates, isLoading, deleteDebate } = useDebates();
+  const { debates, isConnected, deleteDebate } = useDebates();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const currentDebateId = searchParams.get('id');
@@ -26,6 +26,7 @@ export default function Sidebar() {
   const handleDelete = (e, id) => {
     e.preventDefault();
     e.stopPropagation();
+    // Fire-and-forget. The list will update automatically.
     deleteDebate(id);
     if (currentDebateId === id) {
       navigate(createPageUrl('Home'));
@@ -61,12 +62,12 @@ export default function Sidebar() {
             </CollapsibleTrigger>
             <CollapsibleContent className="px-2 pb-2">
               <div className="space-y-1">
-                {isLoading && (
+                {!isConnected && (
                   <div className="text-center text-muted-foreground p-4 text-sm">
-                    Loading debates...
+                    Connecting...
                   </div>
                 )}
-                {!isLoading && debates.length === 0 && (
+                {isConnected && debates.length === 0 && (
                   <div className="text-center text-muted-foreground p-4 text-sm">
                     No debates yet. Start one!
                   </div>

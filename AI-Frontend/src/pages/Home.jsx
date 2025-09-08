@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/switch'; // Fixed: Removed 's' after Switch
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sparkles, Users, Zap, ArrowRight, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '../components/utils'; // Updated import path
+import { createPageUrl } from '../components/utils';
 import { useDebates } from '../components/DebatesContext';
 import { aiPersonas, sampleTopics } from '../components/MockData';
 
@@ -32,8 +32,18 @@ export default function HomePage() {
         user_participated: userParticipation,
       };
       
+      // `addDebate` now returns a Promise that resolves when the backend confirms creation
       const newDebate = await addDebate(debateData);
-      navigate(createPageUrl('Debate') + `?id=${newDebate.id}`);
+      
+      // Navigate only after we have the ID from the backend
+      if (newDebate && newDebate.id) {
+        navigate(createPageUrl('Debate') + `?id=${newDebate.id}`);
+      } else {
+        // Handle case where debate creation failed or didn't return an ID
+        console.error("Failed to get new debate ID from WebSocket or debate creation failed.");
+        setIsStarting(false);
+      }
+
     } catch (error) {
       console.error("Failed to start debate:", error);
       setIsStarting(false);

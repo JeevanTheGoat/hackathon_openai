@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Users, Zap, CheckSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createPageUrl } from '../components/utils'; // Changed path from '../utils' to '../components/utils'
+import { createPageUrl } from '../components/utils';
 import { useDebates } from '../components/DebatesContext';
 import { aiPersonas } from '../components/MockData'; // Only needed for static data like avatar
 import DebateRound from '../components/DebateRound';
@@ -17,104 +17,77 @@ const rounds = ['opening', 'rebuttal', 'crosstalk', 'closing'];
 export default function DebatePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { getDebateById, updateDebate, submitUserMessage } = useDebates();
+  const { activeDebate, getDebateById, updateDebate, submitUserMessage, isConnected } = useDebates();
   const debateId = searchParams.get('id');
   
-  const [debate, setDebate] = useState(null);
   const [activeRound, setActiveRound] = useState('opening');
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadDebateData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const debateData = await getDebateById(debateId);
-      if (debateData) {
-        setDebate(debateData);
-        setActiveRound(debateData.current_round || 'opening');
-      } else {
-        navigate(createPageUrl('Home'));
-      }
-    } catch (error) {
-      console.error('Error loading debate:', error);
-      navigate(createPageUrl('Home'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [debateId, getDebateById, navigate]);
+  // Local loading state for generating next round, separate from connection status
+  const [isGenerating, setIsGenerating] = useState(false); 
 
   useEffect(() => {
-    if (debateId) {
-      loadDebateData();
-    } else {
+    if (debateId && isConnected) {
+      // Request the debate details when the component mounts or ID changes
+      getDebateById(debateId);
+    } else if (!debateId) {
+      // If no debateId is provided, navigate home
       navigate(createPageUrl('Home'));
     }
-  }, [debateId, loadDebateData, navigate]);
+  }, [debateId, isConnected, getDebateById, navigate]);
 
-  const handleNextRound = async () => {
-    const currentProgressIndex = rounds.indexOf(debate.current_round);
+  useEffect(() => {
+    // When the activeDebate data arrives from the context, update the local activeRound
+    if (activeDebate) {
+      setActiveRound(activeDebate.current_round || 'opening');
+      // If we were waiting for generation, we can stop now
+      setIsGenerating(false);
+    }
+  }, [activeDebate]);
+
+  const handleNextRound = () => {
+    if (!activeDebate) return;
+
+    const currentProgressIndex = rounds.indexOf(activeDebate.current_round);
     if (currentProgressIndex < rounds.length - 1) {
       const nextRound = rounds[currentProgressIndex + 1];
+      setIsGenerating(true); // Show a spinner immediately
       
-      setIsLoading(true);
-      
-      try {
-        // Update the debate and get fresh data
-        const updatedDebate = await updateDebate(debateId, { 
-          current_round: nextRound,
-          generate_responses: true
-        });
-        
-        // NUCLEAR OPTION: Force a complete re-render by creating entirely new objects
-        const completelyFreshDebate = {
-          ...updatedDebate,
-          rounds_data: updatedDebate.rounds_data ? {
-            ...updatedDebate.rounds_data,
-            [nextRound]: [...(updatedDebate.rounds_data[nextRound] || [])]
-          } : {},
-          // Force new timestamp to guarantee React sees this as different
-          _forceRefresh: Date.now()
-        };
-        
-        setDebate(completelyFreshDebate);
-        setActiveRound(nextRound);
-        
-      } catch (error) {
-        console.error("Error proceeding to next round:", error);
-      } finally {
-        setIsLoading(false);
-      }
+      // Just send the update request. The UI will update when the new data arrives via WebSocket.
+      updateDebate(debateId, { 
+        current_round: nextRound,
+        generate_responses: true
+      });
     }
   };
 
-  const handleGoToVoting = async () => {
-    await updateDebate(debateId, { current_round: 'voting' });
+  const handleGoToVoting = () => {
+    updateDebate(debateId, { current_round: 'voting' });
     navigate(createPageUrl('Results') + `?id=${debateId}`);
   };
 
-  const handleUserMessage = async (message) => {
-    const updatedMessages = await submitUserMessage(debateId, activeRound, message);
-    setDebate(prev => ({ ...prev, user_messages: updatedMessages }));
-  };
+  const handleUserMessage = useCallback((message) => {
+    // This function is now fire-and-forget. The context handles the logic.
+    // Use useCallback to prevent stale state issues with activeRound.
+    submitUserMessage(debateId, activeRound, message);
+  }, [debateId, activeRound, submitUserMessage]); // Dependencies for useCallback
 
   const getActivePersonas = () => {
-    if (!debate) return [];
-    // Now use the selected_ais array instead of mode/selected_ai
-    return aiPersonas.filter(p => debate.selected_ais && debate.selected_ais.includes(p.name));
+    if (!activeDebate) return [];
+    return aiPersonas.filter(p => activeDebate.selected_ais && activeDebate.selected_ais.includes(p.name));
   };
 
-  if (isLoading && !debate) { // Only show full-page loader if debate data itself is loading for the first time
+  // Show a loading screen if the connection is down or we don't have the debate data yet.
+  if (!isConnected || !activeDebate) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Loading debate...</p>
+          <p className="text-muted-foreground">{!isConnected ? 'Connecting...' : 'Loading debate...'}</p>
         </div>
       </div>
     );
   }
 
-  if (!debate) return null;
-
+  const debate = activeDebate; // Use a shorter alias for convenience
   const activePersonas = getActivePersonas();
   const currentProgressIndex = rounds.indexOf(debate.current_round);
   const isFinalRoundActive = currentProgressIndex === rounds.length - 1;
@@ -162,7 +135,7 @@ export default function DebatePage() {
                   activeRound === round ? 'text-foreground' : 'text-muted-foreground'
                 } ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => !isLocked && setActiveRound(round)}
-                disabled={isLocked || isLoading} // Also disable if generating responses
+                disabled={isLocked || isGenerating}
               >
                 {round}
               </Button>
@@ -177,7 +150,7 @@ export default function DebatePage() {
           transition={{ delay: 0.2 }}
           className="mb-8"
         >
-          {isLoading && debate ? ( // Corrected Condition: Show spinner if loading and debate exists
+          {isGenerating ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-center space-y-4">
                 <div className="w-12 h-12 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
@@ -198,8 +171,8 @@ export default function DebatePage() {
           )}
         </motion.div>
 
-        {/* User Input - only show when not loading */}
-        {debate.user_participated && !isLoading && (
+        {/* User Input - only show when not generating */}
+        {debate.user_participated && !isGenerating && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -226,7 +199,7 @@ export default function DebatePage() {
               onClick={handleGoToVoting}
               size="lg"
               className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isLoading}
+              disabled={isGenerating}
             >
               <CheckSquare className="w-5 h-5" />
               Finish Debate & Go to Voting
@@ -236,9 +209,9 @@ export default function DebatePage() {
               onClick={handleNextRound}
               size="lg"
               className="flex items-center gap-2"
-              disabled={isLoading}
+              disabled={isGenerating}
             >
-              {isLoading ? (
+              {isGenerating ? (
                 <>
                   <div className="w-5 h-5 border-2 border-muted border-t-primary rounded-full animate-spin" />
                   Generating...
