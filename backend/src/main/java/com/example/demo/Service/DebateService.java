@@ -7,7 +7,7 @@ import com.example.demo.entities.models.dtos.DebateDTO;
 import com.example.demo.entities.models.dtos.DebateResponse;
 import com.example.demo.entities.models.dtos.DebateUpdateDTO;
 import com.example.demo.entities.models.dtos.UserMessageDTO;
-import com.example.demo.exceptions.DebateNotFoundException;
+import com.example.demo.Exceptions.DebateNotFoundException;
 import com.example.demo.holder.DebateHolder;
 import com.example.demo.mapper.DebateMapper;
 import lombok.RequiredArgsConstructor;

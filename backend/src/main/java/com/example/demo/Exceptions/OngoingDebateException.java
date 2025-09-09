@@ -1,4 +1,4 @@
-package com.example.demo.exceptions;
+package com.example.demo.Exceptions;
 
 public class OngoingDebateException extends RuntimeException {
     public OngoingDebateException(String message) {
