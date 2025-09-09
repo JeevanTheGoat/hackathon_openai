@@ -57,6 +57,8 @@ public class AIFactory {
             debateAI.setId(matchingMasterAi.getId()*10);
             debateAis.add(debateAI);
 
+            matchingMasterAi.setSelectedCount(matchingMasterAi.getSelectedCount()+1);
+
         }
         return debateAis;
     }

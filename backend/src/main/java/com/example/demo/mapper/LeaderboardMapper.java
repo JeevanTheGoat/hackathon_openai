@@ -7,14 +7,14 @@ public class LeaderboardMapper {
 
     public static LeaderboardResponse generateResponse(AIDebater aiDebater){
 
-        LeaderboardResponse response = new LeaderboardResponse();
-        response.setName(aiDebater.getStyle().name());
-        response.setCreativeVotes(aiDebater.getCreativeVotes());
-        response.setFunnyVotes(aiDebater.getFunnyVotes());
-        response.setPlayed(aiDebater.getPlayed());
-        response.setWins(aiDebater.getWins());
+        LeaderboardResponse r = new LeaderboardResponse();
+        r.setName(aiDebater.getStyle().name());
+        r.setCreativeVotes(aiDebater.getCreativeVotes());
+        r.setFunnyVotes(aiDebater.getFunnyVotes());
+        r.setSelectedCount(aiDebater.getSelectedCount());
+        r.setWins(aiDebater.getWins());
 
-        return response;
+        return r;
 
 
     }

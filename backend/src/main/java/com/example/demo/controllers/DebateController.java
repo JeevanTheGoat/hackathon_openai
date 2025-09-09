@@ -15,11 +15,10 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/debates")
 public class DebateController {
-    
-    //ALLOW USER TO PARTICIPATE IN DEBATES
-    //402 PAYMENT_REQUIRED
+
 
     private final DebateService debateService;
+
 
     @PostMapping
     public ResponseEntity<Debate> createDebate(@RequestBody DebateDTO debateDTO){
@@ -45,9 +44,9 @@ public class DebateController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Debate> updateDebate(@PathVariable Long id, @RequestBody DebateUpdateDTO data){
+    public ResponseEntity<DebateResponse> updateDebate(@RequestBody DebateUpdateDTO data){
 
-        return ResponseEntity.ok(debateService.updateDebate(id, data));
+        return ResponseEntity.ok(debateService.updateDebate(data));
 
     }
 

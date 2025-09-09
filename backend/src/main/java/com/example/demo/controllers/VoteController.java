@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class VoteController {
 
+
     private final VoteService voteService;
 
     @PostMapping("/{id}")

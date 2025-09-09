@@ -15,6 +15,6 @@ public class LeaderboardResponse {
 
     private int wins;
 
-    private int played;
+    private int selectedCount;
 
 }

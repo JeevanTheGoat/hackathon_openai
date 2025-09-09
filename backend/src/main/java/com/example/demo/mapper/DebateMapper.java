@@ -16,6 +16,9 @@ public class DebateMapper {
         response.setTopic(debate.getTopic());
         response.setCurrent_round(debate.getRound().name().toLowerCase());
         response.setRounds_data(debate.getRoundsData());
+        response.setUser_participated(debate.isUser_participated());
+        response.setUser_messages(debate.getUser_messages());
+
 
         List<String> selected_ais = new ArrayList<>();
 

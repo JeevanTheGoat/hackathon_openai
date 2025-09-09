@@ -21,6 +21,8 @@ public class Debate {
         roundsData.put("rebuttal", new ArrayList<>());
         roundsData.put("crosstalk", new ArrayList<>());
         roundsData.put("closing", new ArrayList<>());
+
+        user_messages = new HashMap<>();
     }
 
 

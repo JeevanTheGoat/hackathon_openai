@@ -22,6 +22,6 @@ public class AIDebater {
 
     private int wins;
 
-    private int played;
+    private int selectedCount;
 
 }

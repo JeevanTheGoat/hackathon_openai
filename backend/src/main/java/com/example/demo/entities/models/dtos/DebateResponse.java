@@ -21,5 +21,9 @@ public class DebateResponse {
 
     private String current_round;
 
+    private boolean user_participated;
+
+    private Map<String, String> user_messages;
+
 
 }

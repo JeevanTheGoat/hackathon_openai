@@ -6,6 +6,7 @@ import com.example.demo.entities.models.*;
 import com.example.demo.entities.models.dtos.DebateDTO;
 import com.example.demo.entities.models.dtos.DebateResponse;
 import com.example.demo.entities.models.dtos.DebateUpdateDTO;
+import com.example.demo.entities.models.dtos.UserMessageDTO;
 import com.example.demo.exceptions.DebateNotFoundException;
 import com.example.demo.holder.DebateHolder;
 import com.example.demo.mapper.DebateMapper;
@@ -25,18 +26,18 @@ public class DebateService {
     private final DebateHolder debateHolder;
     private final AiResponseService aiResponseService;
 
+
     public List<Debate> getAllDebatesAsList(){
         return new ArrayList<>(debateHolder.getDebates().values());
     }
+
 
     private Map<Long, Debate> getDebates(){
         return debateHolder.getDebates();
     }
 
 
-
     private long nextId = 1;
-
 
 
     public void deleteDebate(Long id){
@@ -61,17 +62,17 @@ public class DebateService {
         List<AIDebater> debateAis = aiFactory.createDebateAIs(aiNames);
         debate.setDebaters(debateAis);
 
-        debateHolder.getDebates().put(debate.getId(), debate);
+        updateDebate(debate.getId(), debate);
         List<Response> responses =  addMessage(debate.getId());
         debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
 
         return debate;
     }
 
-    public Debate updateDebate(Long id, DebateUpdateDTO dto){
 
+    public DebateResponse updateDebate(DebateUpdateDTO dto){
 
-
+        Long id = dto.getDebateId();
         Debate debate = getDebateById(id);
 
         if (debate.getUser_messages() == null) {
@@ -92,22 +93,18 @@ public class DebateService {
             }
         }
 
-
         if(dto.isGenerate_responses() && debate.getRoundsData().get(currentRound).isEmpty()){
             List<Response> responses = addMessage(id);
             debate.getRoundsData().put(debate.getRound().name().toLowerCase(), responses);
         }
 
         if(debate.isUser_participated() && dto.getUser_messages() != null){
-
             debate.getUser_messages().put(debate.getRound().name().toLowerCase(), dto.getUser_messages().get(debate.getRound().name().toLowerCase()));
-
-
         }
 
+        updateDebate(id, debate);
 
-        debateHolder.getDebates().put(id, debate);
-        return debate;
+        return DebateMapper.debateToDTO(debate);
     }
 
 
@@ -119,6 +116,10 @@ public class DebateService {
         return DebateMapper.debateToDTO(debate);
     }
 
+    public void updateDebate(Long id, Debate debate){
+        debateHolder.getDebates().put(id, debate);
+    }
+
     public Debate getDebateById(Long id) {
         Debate debate = debateHolder.getDebates().get(id);
         if (debate == null) {
@@ -127,12 +128,16 @@ public class DebateService {
         return debate;
     }
 
+    public Map<String, String> sendUserMessage(UserMessageDTO msg){
+        Debate debate = getDebateById(msg.getDebateId());
+        debate.getUser_messages().put(msg.getRound(), msg.getMessage());
+        return debate.getUser_messages();
+    }
+
 
     public List<Response> addMessage(Long id) {
 
         Debate debate = getDebateById(id);
-
-
 
         DebateRound debateRound = debate.getRound();
 
@@ -140,11 +145,9 @@ public class DebateService {
                 .flatMap(List::stream)
                 .toList());
 
-
         List<Response> currMessages = debate.getRoundsData()
                 .computeIfAbsent(debateRound.name().toLowerCase(), k -> new ArrayList<>());
         String topic = debate.getTopic();
-
 
         List<AIDebater> debateAis = debate.getDebaters();
 
@@ -153,7 +156,6 @@ public class DebateService {
         for (int i = 0; i < debateAis.size(); i++) {
             AIDebater debater = debateAis.get(i);
             String response = responses.get(i);
-
             Response message = new Response();
             message.setCreatedAt(LocalDateTime.now());
             message.setDebate(debate);
@@ -162,9 +164,9 @@ public class DebateService {
             message.setSender(debater.getStyle().name());
             message.setId(debate.getNextMessageId());
             debate.setNextMessageId(debate.getNextMessageId() + 1);
-
             currMessages.add(message);
         }
         return currMessages;
     }
+
 }

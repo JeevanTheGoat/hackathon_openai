@@ -15,4 +15,6 @@ public class DebateUpdateDTO {
 
     private Map<String, String> user_messages;
 
+    private long debateId;
+
 }
