@@ -1,12 +1,10 @@
 package com.example.demo.websocket;
 
-import com.example.demo.entities.models.Debate;
-import com.example.demo.entities.models.dtos.DebateDTO;
 import com.example.demo.entities.models.dtos.DebateResponse;
 import com.example.demo.entities.models.dtos.DebateUpdateDTO;
 import com.example.demo.entities.models.dtos.UserMessageDTO;
-import com.example.demo.service.DebateService;
-import com.example.demo.service.LeaderboardService;
+import com.example.demo.Service.DebateService;
+import com.example.demo.Service.LeaderboardService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +14,6 @@ import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Service

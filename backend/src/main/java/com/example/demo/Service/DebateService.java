@@ -1,4 +1,4 @@
-package com.example.demo.service;
+package com.example.demo.Service;
 
 import com.example.demo.entities.enums.DebateRound;
 import com.example.demo.entities.enums.DebateStatus;

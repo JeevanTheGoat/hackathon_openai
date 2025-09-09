@@ -2,8 +2,7 @@ package com.example.demo.controllers;
 
 
 import com.example.demo.entities.models.Vote;
-import com.example.demo.service.VoteService;
-import jakarta.servlet.http.HttpSession;
+import com.example.demo.Service.VoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -4,7 +4,7 @@ import com.example.demo.entities.models.Debate;
 import com.example.demo.entities.models.dtos.DebateDTO;
 import com.example.demo.entities.models.dtos.DebateResponse;
 import com.example.demo.entities.models.dtos.DebateUpdateDTO;
-import com.example.demo.service.DebateService;
+import com.example.demo.Service.DebateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
