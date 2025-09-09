@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, ArrowLeft, Loader2, Zap } from 'lucide-react';
 import PersonaBubble from './PersonaBubble';
 
 const roundTitles = {
@@ -24,9 +24,11 @@ export default function DebateRound({
   personas, 
   responses, 
   userMessage, 
-  isActive 
+  isActive,
+  connectionStatus = 'disconnected'
 }) {
   const [currentResponseIndex, setCurrentResponseIndex] = useState(0);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Debug logging
   console.log(`DebateRound rendered:`, {
@@ -34,7 +36,8 @@ export default function DebateRound({
     responsesLength: responses?.length || 0,
     responses: responses,
     currentResponseIndex,
-    userMessage: !!userMessage
+    userMessage: !!userMessage,
+    connectionStatus
   });
 
   useEffect(() => {
@@ -45,7 +48,25 @@ export default function DebateRound({
     
     // Reset to first response when new data comes in
     setCurrentResponseIndex(0);
-  }, [responses, round]);
+    
+    // Check if we're waiting for more responses (WebSocket mode)
+    if (connectionStatus === 'connected' && responses?.length < personas.length) {
+      setIsGenerating(true);
+    } else {
+      setIsGenerating(false);
+    }
+  }, [responses, round, connectionStatus, personas.length]);
+
+  // Auto-advance to new responses when they come in via WebSocket
+  useEffect(() => {
+    if (connectionStatus === 'connected' && responses?.length > 0) {
+      // If we were at the end and a new response came in, move to it
+      const totalResponses = responses.length + (userMessage ? 1 : 0);
+      if (currentResponseIndex >= totalResponses - 1 && responses.length > currentResponseIndex) {
+        setCurrentResponseIndex(responses.length - 1);
+      }
+    }
+  }, [responses?.length, connectionStatus, currentResponseIndex, userMessage]);
 
   if (!isActive) return null;
 
@@ -54,15 +75,11 @@ export default function DebateRound({
   const totalResponses = safeResponses.length + (userMessage ? 1 : 0);
   const hasUserMessage = !!userMessage;
   
-  // Additional safety check
-  if (totalResponses === 0) {
-    console.warn(`No responses available for round ${round}`, { safeResponses, userMessage });
-    return (
-      <div className="text-center p-8">
-        <p className="text-muted-foreground">No responses available for this round yet.</p>
-      </div>
-    );
-  }
+  // Show generating state if we're connected and expecting more responses
+  const expectedResponses = personas.length;
+  const waitingForResponses = connectionStatus === 'connected' && 
+                              safeResponses.length < expectedResponses && 
+                              safeResponses.length > 0;
   
   const handleNext = () => {
     console.log(`Next clicked:`, { currentResponseIndex, totalResponses });
@@ -85,7 +102,10 @@ export default function DebateRound({
   console.log(`Current display state:`, {
     isShowingUserMessage,
     currentResponse,
-    currentPersona: currentPersona?.name || 'none'
+    currentPersona: currentPersona?.name || 'none',
+    waitingForResponses,
+    expectedResponses,
+    actualResponses: safeResponses.length
   });
 
   return (
@@ -98,10 +118,26 @@ export default function DebateRound({
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-foreground">{roundTitles[round]}</h2>
         <p className="text-muted-foreground">{roundDescriptions[round]}</p>
+        
         <div className="flex items-center justify-center gap-4 mt-4">
           <span className="text-sm text-muted-foreground">
-            Response {currentResponseIndex + 1} of {totalResponses}
+            {totalResponses > 0 ? `Response ${currentResponseIndex + 1} of ${totalResponses}` : 'No responses yet'}
           </span>
+          
+          {waitingForResponses && (
+            <Badge variant="outline" className="flex items-center gap-2 bg-primary/10 text-primary border-primary/30">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              Generating ({safeResponses.length}/{expectedResponses})
+            </Badge>
+          )}
+          
+          {connectionStatus === 'connected' && !waitingForResponses && safeResponses.length > 0 && (
+            <Badge variant="outline" className="flex items-center gap-2 bg-green-500/10 text-green-400 border-green-500/30">
+              <Zap className="w-3 h-3" />
+              Live
+            </Badge>
+          )}
+          
           <div className="flex gap-1">
             {Array.from({ length: totalResponses }).map((_, index) => (
               <div
@@ -117,7 +153,17 @@ export default function DebateRound({
 
       <div className="min-h-[200px] flex items-center justify-center">
         <AnimatePresence mode="wait">
-          {isShowingUserMessage ? (
+          {totalResponses === 0 ? (
+            <div className="text-center p-8 space-y-4" key="no-responses">
+              <div className="w-16 h-16 border-4 border-muted border-t-primary rounded-full animate-spin mx-auto" />
+              <p className="text-muted-foreground">
+                {connectionStatus === 'connected' ? 
+                  'Waiting for AI responses...' : 
+                  'No responses available for this round yet.'
+                }
+              </p>
+            </div>
+          ) : isShowingUserMessage ? (
             <PersonaBubble
               key="user-message"
               isUser={true}
@@ -132,33 +178,35 @@ export default function DebateRound({
               delay={0}
             />
           ) : (
-            <div className="text-center p-4">
+            <div className="text-center p-4" key="no-response">
               <p className="text-muted-foreground">No response available</p>
             </div>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="flex justify-center gap-4">
-        <Button
-          onClick={handlePrevious}
-          disabled={currentResponseIndex === 0}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Previous
-        </Button>
-        
-        <Button
-          onClick={handleNext}
-          disabled={currentResponseIndex >= totalResponses - 1}
-          className="flex items-center gap-2"
-        >
-          Next
-          <ArrowRight className="w-4 h-4" />
-        </Button>
-      </div>
+      {totalResponses > 1 && (
+        <div className="flex justify-center gap-4">
+          <Button
+            onClick={handlePrevious}
+            disabled={currentResponseIndex === 0}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Previous
+          </Button>
+          
+          <Button
+            onClick={handleNext}
+            disabled={currentResponseIndex >= totalResponses - 1}
+            className="flex items-center gap-2"
+          >
+            Next
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </motion.div>
   );
 }

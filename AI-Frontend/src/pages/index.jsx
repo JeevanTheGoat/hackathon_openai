@@ -4,9 +4,9 @@ import Home from "./Home";
 
 import Debate from "./Debate";
 
-import Results from "./Results";
-
 import Leaderboard from "./Leaderboard";
+
+import Results from "./Results";
 
 import Personalities from "./Personalities";
 
@@ -18,9 +18,9 @@ const PAGES = {
     
     Debate: Debate,
     
-    Results: Results,
-    
     Leaderboard: Leaderboard,
+    
+    Results: Results,
     
     Personalities: Personalities,
     
@@ -55,9 +55,9 @@ function PagesContent() {
                 
                 <Route path="/Debate" element={<Debate />} />
                 
-                <Route path="/Results" element={<Results />} />
-                
                 <Route path="/Leaderboard" element={<Leaderboard />} />
+                
+                <Route path="/Results" element={<Results />} />
                 
                 <Route path="/Personalities" element={<Personalities />} />
                 
