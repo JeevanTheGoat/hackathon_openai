@@ -1,99 +1,80 @@
-# hackathon_openai
+## Testing Instructions
 
-# AI DebateMate is a fun and interactive platform where multiple AI debaters argue on a wide range of topics, it ranges from fun to interactive to serious or random
+### Requirements
 
-# AI DebateMate brings debates to life by allowing 7 AI debaters to take on unique perspectives and personalities
-# The vision of this project is to 
+* Python 3.9+
+* Node.js 18+
+* Java 17+
+* Maven
+* OpenAI API Key
 
-- Explore AI-driven discourse in real time.
-- Provide an educational tool for argumentation and critical thinking.
-- Deliver entertainment through humorous and unexpected debates.
-Example topics Include:
-- Should pineapple be allowed on pizza?
-- Will AI replace teachers by 2030?
-- Is homework still relevant in 2025? 
+---
 
-# Features
-Multi-AI Debate Simulation: Watch 5 AI debaters argue with structured phases:
-- Opening statements
-- Rebuttals
-- Cross-talk
-- Closing arguments
-- Voting System: Users can vote for the winner after each debate.
-- Leaderboard: highlights the prompoters and the results based on the voting
+### 1. Clone the Repository
 
-# Getting Started
-Python 3.9+
-Node.js 18+
-gpt-oss-20b
-Java 17+
-fast api key
-
-#Installation 
-
-1. Clone the Repository
+```bash
 git clone https://github.com/JeevanTheGoat/hackathon_openai.git
 cd hackathon_openai
+```
 
-2. Configure Environment Variables
+---
 
-In src/main/resources/application.properties:
+### 2. Configure Environment Variables
+
+Open `src/main/resources/application.properties` and add:
+
+```
 openai.api.key=YOUR_OPENAI_API_KEY
 server.port=8080
+```
 
-3. Build and Run the Backend
+---
 
-Using Maven:
+### 3. Build and Run Backend (Spring Boot)
+
+```bash
 mvn clean install
 mvn spring-boot:run
-Your backend will now run at:
-http://localhost:8080
+```
 
-#Usage
-Endpoint: Generate Debate
+Backend will run at: **[http://localhost:8080](http://localhost:8080)**
 
-POST /ai/debate
+---
 
-Example Request
-{
-  "topic": "Should artificial intelligence be regulated?",
-  "numDebaters": 7
-}
+### 4. Run Frontend (Optional)
 
-Example Response
-{
-  "topic": "Should artificial intelligence be regulated?",
-  "debate": [
-    {
-      "agent": "AI_1",
-      "response": "AI must be regulated to ensure safety and prevent misuse."
-    },
-    {
-      "agent": "AI_2",
-      "response": "Regulation could limit innovation and slow progress."
-    }
-  ]
-}
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-#Testing Instructions
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 
-We use JUnit for testing and curl for manual endpoint testing.
+---
 
-Run Automated Tests
-mvn test
+### 5. Manual API Testing with cURL
 
-Manual Testing with Curl
-Create a file named sample_input.json:
+1. Create a file named `sample_input.json`:
+
+```json
 {
   "topic": "Will AI replace human jobs?",
   "numDebaters": 7
 }
-Run:
+```
+
+2. Run:
+
+```bash
 curl -X POST http://localhost:8080/ai/debate \
 -H "Content-Type: application/json" \
 -d @sample_input.json
+```
 
-# Sample Output
+**Expected Output:**
+
+```json
 {
   "topic": "Will AI replace human jobs?",
   "debate": [
@@ -104,36 +85,122 @@ curl -X POST http://localhost:8080/ai/debate \
     {
       "agent": "AI_2",
       "response": "While AI will automate some roles, humans will always be needed for oversight and ethics."
-    },
-    {
-      "agent": "AI_3",
-      "response": "Both AI and humans must coexist, with education adapting to this shift."
     }
   ]
 }
+```
 
-# Contributing
+---
 
-We welcome contributions!
-To contribute:
+### 6. Run Automated Tests
 
-Fork this repository
+```bash
+mvn test
+```
 
-Create a new feature branch
+---
 
-Submit a pull request
+If you want, I can **update the full README** so **every section and subsection** uses `#` headers consistently. This will make it look super clean and hackathon-ready. Do you want me to do that?
+Ah, got it! You want all section headers like **“Run Automated Tests”** to have Markdown `#` symbols so they’re treated as proper headers. Here’s the **Testing Instructions** section updated with headers:
 
-# License
+---
 
-This project is licensed under the MIT License – see the LICENSE
- file for details.
+## Testing Instructions
 
-# Hackathon Checklist
+### Requirements
 
- Clear setup instructions
+* Python 3.9+
+* Node.js 18+
+* Java 17+
+* Maven
+* OpenAI API Key
 
- Testing data included (sample_input.json)
+---
 
- Demo-ready backend with /ai/debate endpoint
+### 1. Clone the Repository
 
- Unique project purpose explained clearly
+```bash
+git clone https://github.com/JeevanTheGoat/hackathon_openai.git
+cd hackathon_openai
+```
+
+---
+
+### 2. Configure Environment Variables
+
+Open `src/main/resources/application.properties` and add:
+
+```
+openai.api.key=YOUR_OPENAI_API_KEY
+server.port=8080
+```
+
+---
+
+### 3. Build and Run Backend (Spring Boot)
+
+```bash
+mvn clean install
+mvn spring-boot:run
+```
+
+Backend will run at: **[http://localhost:8080](http://localhost:8080)**
+
+---
+
+### 4. Run Frontend (Optional)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+---
+
+### 5. Manual API Testing with cURL
+
+1. Create a file named `sample_input.json`:
+
+```json
+{
+  "topic": "Will AI replace human jobs?",
+  "numDebaters": 7
+}
+```
+
+2. Run:
+
+```bash
+curl -X POST http://localhost:8080/ai/debate \
+-H "Content-Type: application/json" \
+-d @sample_input.json
+```
+
+**Expected Output:**
+
+```json
+{
+  "topic": "Will AI replace human jobs?",
+  "debate": [
+    {
+      "agent": "AI_1",
+      "response": "AI will replace repetitive and dangerous jobs, freeing humans for creative tasks."
+    },
+    {
+      "agent": "AI_2",
+      "response": "While AI will automate some roles, humans will always be needed for oversight and ethics."
+    }
+  ]
+}
+```
+
+---
+
+### 6. Run Automated Tests
+
+```bash
+mvn test
+```
